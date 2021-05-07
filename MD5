@@ -1,0 +1,13 @@
+eb74fd3746987b7711e8df9fae579209 *DESCRIPTION
+ba32463f4647e688dce1c43b869478bb *NAMESPACE
+1c242249e24450adfeb40c576d75b6b2 *R/Data.R
+d070e8e6490908159614a1268da8a11f *R/QCH_functions.R
+e0ef681901465d24f47f9139cb2c086a *R/qch-package.R
+aacbfe98ddfb739904382b9ad8e98aba *data/PvalSets.rda
+eac1213d953962608dd8a2bde7b23de5 *man/FastKerFdr.Rd
+6b4cfbe8331db12171abd96a6a00a4c2 *man/GetHinfo.Rd
+c7fa58a9ea95bd1e2929f3d0826b0b49 *man/GetHinfoEqual.Rd
+ecc1afc03d4c3aa8ff6541d20c35314f *man/PvalSets.Rd
+57d5aeceb926b756bf1fc00d86e45f03 *man/qch-package.Rd
+97de6d91273ddaab3d3a171626c2fc58 *man/qch.fit.Rd
+625b99d1355f866102a481f4c944f26f *man/qch.test.Rd
