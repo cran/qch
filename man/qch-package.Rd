@@ -4,23 +4,34 @@
 \name{qch-package}
 \alias{qch}
 \alias{qch-package}
-\title{qch: Query Composed Hypotheses}
+\title{qch: Query Composite Hypotheses}
 \description{
-Provides functions for the joint analysis of K sets
-    of p-values obtained for a same list of items. This joint analysis is
-    performed by querying a composed hypothesis, i.e. an arbitrary complex
-    combination of simple hypotheses, as described in Mary-Huard et al.
-    (2021) <arXiv:2104.14601>. The null distribution corresponding to the
-    composed hypothesis of interest is obtained by fitting non-parametric
-    mixtures models (one for each of the simple hypothesis of the complex
-    combination). Type I error rate control is achieved through Bayesian
-    False Discovery Rate control.  The 3 main functions of the package
-    GetHinfo(), qch.fit() and qch.test() correspond to the 3 steps for
-    querying a composed hypothesis (composed H0/H1 formulation, inferring
-    the null distribution and testing the null hypothesis).
+Provides functions for the joint analysis of Q sets of p-values obtained for the same list of items. This joint analysis is performed by querying a composite hypothesis, i.e. an arbitrary complex combination of simple hypotheses, as described in Mary-Huard et al. (2021) \doi{10.1093/bioinformatics/btab592} and De Walsche et al.(2023) \doi{10.1101/2024.03.17.585412}. In this approach, the Q-uplet of p-values associated with each item is distributed as a multivariate mixture, where each of the 2^Q components corresponds to a specific combination of simple hypotheses. The dependence between the p-value series is considered using a Gaussian copula function. A p-value for the composite hypothesis test is derived from the posterior probabilities.
+}
+\details{
+The main functions of the package \code{\link{GetHconfig}}, \code{\link{GetH1AtLeast}},
+\code{\link{GetH1Equal}},
+\code{\link{qch.fit}} and \code{\link{qch.test}} correspond to the
+4 steps for querying a composite hypothesis:
+\itemize{
+\item Building all possible combination of simple hypotheses \eqn{H_0}/\eqn{H_1}
+\item Composite alternative hypothesis formulation
+\item Inferring the null distribution
+\item Testing the composite null hypothesis
+}
 }
 \author{
 \strong{Maintainer}: Tristan Mary-Huard \email{tristan.mary-huard@agroparistech.fr} (\href{https://orcid.org/0000-0002-3839-9067}{ORCID})
+
+Authors:
+\itemize{
+  \item Annaig De Walsche \email{annaig.de-walsche@inrae.fr} (\href{https://orcid.org/0000-0003-0603-1716}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item Franck Gauthier \email{franck.gauthier@inrae.fr} (\href{https://orcid.org/0000-0003-0574-065X}{ORCID}) [contributor]
+}
 
 }
 \keyword{internal}
