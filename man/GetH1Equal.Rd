@@ -20,10 +20,10 @@ A vector '\code{Hconfig.H1}' of components of \code{Hconfig} that correspond to 
 }
 \description{
 Specify which configurations among \code{Hconfig} correspond
-to the composite alternative hypothesis :\{Exaltly "\code{Equal}" \eqn{H_1} hypotheses are of interest \}
+to the composite alternative hypothesis :\{Exactly "\code{Equal}" \eqn{H_1} hypotheses are of interest \}
 }
 \examples{
-GetH1Equal(GetHconfig(4),2)
+GetH1Equal(GetHconfig(4), 2)
 
 }
 \seealso{

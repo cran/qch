@@ -1,6 +1,6 @@
 Package: qch
 Title: Query Composite Hypotheses
-Version: 2.0.0
+Version: 2.1.0
 Authors@R: c(
     person("Tristan", "Mary-Huard", , "tristan.mary-huard@agroparistech.fr", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3839-9067")),
@@ -27,13 +27,16 @@ Depends: R (>= 2.10)
 Imports: copula, dplyr, graphics, ks, purrr, qvalue, Rcpp, stats,
         stringr, utils
 LinkingTo: Rcpp, RcppArmadillo
+biocViews:
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 NeedsCompilation: yes
-Packaged: 2024-03-29 18:49:46 UTC; Annaig
-Author: Tristan Mary-Huard [aut, cre] (<https://orcid.org/0000-0002-3839-9067>),
-  Annaig De Walsche [aut] (<https://orcid.org/0000-0003-0603-1716>),
-  Franck Gauthier [ctb] (<https://orcid.org/0000-0003-0574-065X>)
+Packaged: 2025-07-04 11:22:16 UTC; Annaig
+Author: Tristan Mary-Huard [aut, cre] (ORCID:
+    <https://orcid.org/0000-0002-3839-9067>),
+  Annaig De Walsche [aut] (ORCID:
+    <https://orcid.org/0000-0003-0603-1716>),
+  Franck Gauthier [ctb] (ORCID: <https://orcid.org/0000-0003-0574-065X>)
 Repository: CRAN
-Date/Publication: 2024-03-29 22:50:02 UTC
+Date/Publication: 2025-07-04 12:50:02 UTC

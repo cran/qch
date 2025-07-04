@@ -14,7 +14,7 @@ gaussian_copula_density(zeta, R, Rinv)
 \item{Rinv}{the inverse correlation matrix.}
 }
 \value{
-A numeric vector, each coordinate i corresponding to the evaluation of the Gaussian copula density function at observation zeta_i.
+A numeric vector, each coordinate \eqn{i} corresponding to the evaluation of the Gaussian copula density function at observation \eqn{\code{zeta}_i}.
 }
 \description{
 Gaussian copula density
