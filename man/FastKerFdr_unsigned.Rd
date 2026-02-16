@@ -16,32 +16,23 @@ FastKerFdr_unsigned(
 \arguments{
 \item{X}{a vector of probit-transformed p-values (corresponding to a p-value serie)}
 
-\item{p0}{a priori proportion of \eqn{H_0} hypotheses}
+\item{p0}{a priori proportion of H0 hypotheses}
 
-\item{plotting}{boolean, should some diagnostic graphs be plotted. (Default is FALSE.)}
+\item{plotting}{boolean, should some diagnostic graphs be plotted. Default is FALSE.}
 
-\item{NbKnot}{The (maximum) number of knot for the \code{kde} procedure. (Default is 1e5.)}
+\item{NbKnot}{The (maximum) number of knot for the kde procedure. Default is 1e5}
 
-\item{tol}{a tolerance value for convergence. (Default is 1e-5.)}
+\item{tol}{a tolerance value for convergence. Default is 1e-5}
 
 \item{max_iter}{the maximum number of iterations allowed for the algorithm to converge or complete its process.(Default is 1e4.)}
 }
 \value{
-A list with the following elements:
-\tabular{ll}{
-\code{p0} \tab vector of  the estimated proportions of \eqn{H_0} hypotheses
-for each of p-value serie. \cr
-\code{tau} \tab the vector of \eqn{H_1} posteriors. \cr
-\code{f1} \tab a numeric vector, each coordinate \eqn{i}
-corresponding to the evaluation of the \eqn{H_1} density at point \eqn{x_i},
-where \eqn{x_i} is the \eqn{i}th item in \code{X}. \cr
-\code{F1} \tab  a numeric vector, each coordinate \eqn{i}
-corresponding to the evaluation of the \eqn{H_1} cdf at point \eqn{x_i},
-where \eqn{x_i} is the \eqn{i}th item in \code{X}.
-}
+A list of 3 objects.
+Object 'p0' is an estimate of the proportion of H0 hypotheses,
+Object 'tau' is the vector of H1 posteriors,
+Object 'f1' is a numeric vector, each coordinate i corresponding to the evaluation of the H1 density at point xi, where xi is the ith item in X.
+Object 'F1' is a numeric vector, each coordinate i corresponding to the evaluation of the H1 ;cdf at point xi, where xi is the ith item in X.
 }
 \description{
-Kernel estimation of the density in a two-components mixture model
-where one component are a standard Gaussian density.
-Here we suppose that the density to estimate lives in \eqn{R^+}.
+FastKerFdr unsigned
 }

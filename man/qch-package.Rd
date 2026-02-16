@@ -6,7 +6,7 @@
 \alias{qch-package}
 \title{qch: Query Composite Hypotheses}
 \description{
-Provides functions for the joint analysis of Q sets of p-values obtained for the same list of items. This joint analysis is performed by querying a composite hypothesis, i.e. an arbitrary complex combination of simple hypotheses, as described in Mary-Huard et al. (2021) \doi{10.1093/bioinformatics/btab592} and De Walsche et al.(2023) \doi{10.1101/2024.03.17.585412}. In this approach, the Q-uplet of p-values associated with each item is distributed as a multivariate mixture, where each of the 2^Q components corresponds to a specific combination of simple hypotheses. The dependence between the p-value series is considered using a Gaussian copula function. A p-value for the composite hypothesis test is derived from the posterior probabilities.
+Provides functions for the joint analysis of Q sets of p-values obtained for the same list of items. This joint analysis is performed by querying a composite hypothesis, i.e. an arbitrary complex combination of simple hypotheses, as described in Mary-Huard et al. (2021) \doi{10.1093/bioinformatics/btab592} and De Walsche et al.(2025) \doi{ 10.1093/nargab/lqaf118}. In this approach, the Q-uplet of p-values associated with each item is distributed as a multivariate mixture, where each of the 2^Q components corresponds to a specific combination of simple hypotheses. The dependence between the p-value series is considered using a Gaussian copula function. A p-value for the composite hypothesis test is derived from the posterior probabilities.
 }
 \details{
 The main functions of the package \code{\link{GetHconfig}}, \code{\link{GetH1AtLeast}},

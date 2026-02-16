@@ -9,26 +9,20 @@ f1_separation_signed(XMat, f0Mat, f1Mat, p0, plotting = FALSE)
 \arguments{
 \item{XMat}{a matrix of probit-transformed p-values, each column corresponding to a p-value serie.}
 
-\item{f0Mat}{a matrix containing the evaluation of the marginal density functions under \eqn{H_0} at each items,
-each column corresponding to a p-value serie.}
+\item{f0Mat}{a matrix containing the evaluation of the marginal density functions under H0 at each items, each column corresponding to a p-value serie.}
 
-\item{f1Mat}{a matrix containing the evaluation of the marginal density functions under \eqn{H_1} at each items,
-each column corresponding to a p-value serie.}
+\item{f1Mat}{a matrix containing the evaluation of the marginal density functions under H1 at each items, each column corresponding to a p-value serie.}
 
-\item{p0}{the proportions of \eqn{H_0} items for each series.}
+\item{p0}{the proportions of H0 items for each series.}
 
-\item{plotting}{boolean, should some diagnostic graphs be plotted. (Default is FALSE.)}
+\item{plotting}{boolean, should some diagnostic graphs be plotted. Default is FALSE.}
 }
 \value{
-A list with the following elements:
-\tabular{ll}{
-\code{f1plusMat} \tab a matrix containing the evaluation of the marginal density functions under \eqn{H_1^+}
-at each items, each column corresponding to a p-value serie. \cr
-\code{f1minusMat} \tab a matrix containing the evaluation of the marginal density functions under \eqn{H_1^-}
-at each items, each column corresponding to a p-value serie. \cr
-\code{p1plus} \tab an estimate of the proportions of \eqn{H_1^+} items for each series. \cr
-\code{p1minus} \tab an estimate of the proportions of \eqn{H_1^-} items for each series.
-}
+A list of 4 objects 'f1plusMat', 'f1minusMat', 'p1plus', 'p1minus'.
+Object 'f1plusMat' is a matrix containing the evaluation of the marginal density functions under H1plus at each items, each column corresponding to a p-value serie.
+Object 'f1minusMat' is a matrix containing the evaluation of the marginal density functions under H1minus at each items, each column corresponding to a p-value serie.
+Object 'p1plus' is an estimate of the proportions of H1plus items for each series.
+Object 'p1minus' is an estimate of the proportions of H1minus items for each series.
 }
 \description{
 Signed case function: Separate f1 into f+ and f-
