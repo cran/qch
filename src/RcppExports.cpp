@@ -102,6 +102,46 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// last_incomplete_trapezoid_arma
+void last_incomplete_trapezoid_arma(arma::vec& q_prob, const arma::ivec& q_ind, const arma::vec& q, const arma::vec& eval, const arma::vec& est, const arma::vec& simp_rule, bool density);
+RcppExport SEXP _qch_last_incomplete_trapezoid_arma(SEXP q_probSEXP, SEXP q_indSEXP, SEXP qSEXP, SEXP evalSEXP, SEXP estSEXP, SEXP simp_ruleSEXP, SEXP densitySEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type q_prob(q_probSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type q_ind(q_indSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type q(qSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type eval(evalSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type est(estSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type simp_rule(simp_ruleSEXP);
+    Rcpp::traits::input_parameter< bool >::type density(densitySEXP);
+    last_incomplete_trapezoid_arma(q_prob, q_ind, q, eval, est, simp_rule, density);
+    return R_NilValue;
+END_RCPP
+}
+// remove_decreasing_values_cpp_slow_ordering
+void remove_decreasing_values_cpp_slow_ordering(arma::vec& q_prob, const arma::vec& q, double tol);
+RcppExport SEXP _qch_remove_decreasing_values_cpp_slow_ordering(SEXP q_probSEXP, SEXP qSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type q_prob(q_probSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type q(qSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    remove_decreasing_values_cpp_slow_ordering(q_prob, q, tol);
+    return R_NilValue;
+END_RCPP
+}
+// remove_decreasing_values_cpp
+void remove_decreasing_values_cpp(arma::vec& q_prob, const arma::ivec& order_q, double tol);
+RcppExport SEXP _qch_remove_decreasing_values_cpp(SEXP q_probSEXP, SEXP order_qSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type q_prob(q_probSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type order_q(order_qSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    remove_decreasing_values_cpp(q_prob, order_q, tol);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_qch_fHconfig_sum_update_ptr_parallel", (DL_FUNC) &_qch_fHconfig_sum_update_ptr_parallel, 5},
@@ -109,6 +149,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_qch_fHconfig_sum_update_gaussian_copula_ptr_parallel", (DL_FUNC) &_qch_fHconfig_sum_update_gaussian_copula_ptr_parallel, 9},
     {"_qch_prior_update_gaussian_copula_ptr_parallel", (DL_FUNC) &_qch_prior_update_gaussian_copula_ptr_parallel, 10},
     {"_qch_R_MLE_update_gaussian_copula_ptr_parallel", (DL_FUNC) &_qch_R_MLE_update_gaussian_copula_ptr_parallel, 11},
+    {"_qch_last_incomplete_trapezoid_arma", (DL_FUNC) &_qch_last_incomplete_trapezoid_arma, 7},
+    {"_qch_remove_decreasing_values_cpp_slow_ordering", (DL_FUNC) &_qch_remove_decreasing_values_cpp_slow_ordering, 3},
+    {"_qch_remove_decreasing_values_cpp", (DL_FUNC) &_qch_remove_decreasing_values_cpp, 3},
     {NULL, NULL, 0}
 };
 

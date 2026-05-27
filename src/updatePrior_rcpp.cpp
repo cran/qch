@@ -1,3 +1,14 @@
+
+/***************************************************************************
+ *                           updatePrior_rcpp.cpp                          *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
 #include <RcppArmadillo.h>
 #include <vector>
 #include <cmath> // std::exp()
@@ -25,83 +36,83 @@ arma::vec fHconfig_sum_update_ptr_parallel(const List & Hconfig,
                                    const arma::mat & Logf1Mat,
                                    int threads_nb = 0 ) {
 
-   if(threads_nb < 0) threads_nb = 1;
-   // The number of thread is set to the number of core available by default.
-   // and limited to the number of core available if a higher number is asked.
-   #ifdef _OPENMP
-   int max_threads_nb = omp_get_num_procs();
-   #else
-   int max_threads_nb = 1;
-   #endif
-   if(threads_nb > max_threads_nb || threads_nb == 0) threads_nb = max_threads_nb;
+  if(threads_nb < 0) threads_nb = 1;
+  // The number of thread is set to the number of core available by default.
+  // and limited to the number of core available if a higher number is asked.
+  #ifdef _OPENMP
+  int max_threads_nb = omp_get_num_procs();
+  #else
+  int max_threads_nb = 1;
+  #endif
+  if(threads_nb > max_threads_nb || threads_nb == 0) threads_nb = max_threads_nb;
 
-   // Get the dimensions
-   arma::uword row_nb = Logf0Mat.n_rows;
-   arma::uword col_nb = Logf0Mat.n_cols;
-   arma::uword nb_config = Hconfig.size();
-   // Check the dimensions
-   if(NewPrior.size() != nb_config)
-     stop("OldPrior and Hconfig lengths are different.");
-   if(Logf1Mat.n_rows != row_nb || Logf1Mat.n_cols != col_nb)
-     stop("Logf0Mat and Logf1Mat Dimensions are different.");
+  // Get the dimensions
+  arma::uword row_nb = Logf0Mat.n_rows;
+  arma::uword col_nb = Logf0Mat.n_cols;
+  arma::uword nb_config = Hconfig.size();
+  // Check the dimensions
+  if(NewPrior.size() != nb_config)
+    stop("OldPrior and Hconfig lengths are different.");
+  if(Logf1Mat.n_rows != row_nb || Logf1Mat.n_cols != col_nb)
+    stop("Logf0Mat and Logf1Mat Dimensions are different.");
 
-   std::vector<const int*> HconfigPtr(nb_config);
-   // int** HconfigPtr = new int*[nb_config];
-   for(size_t i=0; i<nb_config; ++i){
-     const IntegerVector v = Hconfig[i];
-     HconfigPtr[i] = &(v[0]);
-   }
+  std::vector<const int*> HconfigPtr(nb_config);
+  // int** HconfigPtr = new int*[nb_config];
+  for(size_t i=0; i<nb_config; ++i){
+    const IntegerVector v = Hconfig[i];
+    HconfigPtr[i] = &(v[0]);
+  }
 
-   // final fHconfig_sum, shared among all threads
-   // => we cannot use this object in the parallel for loop,
-   // See fHconfig_sum_local declaration below.
-   arma::vec fHconfig_sum(row_nb, arma::fill::zeros);
+  // final fHconfig_sum, shared among all threads
+  // => we cannot use this object in the parallel for loop,
+  // See fHconfig_sum_local declaration below.
+  arma::vec fHconfig_sum(row_nb, arma::fill::zeros);
 
-   // beginning of the multi-thread section. Each thread executes this section.
-   #pragma omp parallel num_threads(threads_nb)
-   {
-     // fHconfig_sum_local is a thread-local object, will accumulate the results for each thread,
-     // each of these thread-local objects value will later be accumulated in the final fHconfig_sum.
-     arma::vec fHconfig_sum_local(row_nb, arma::fill::zeros);
+  // beginning of the multi-thread section. Each thread executes this section.
+  #pragma omp parallel num_threads(threads_nb)
+  {
+    // fHconfig_sum_local is a thread-local object, will accumulate the results for each thread,
+    // each of these thread-local objects value will later be accumulated in the final fHconfig_sum.
+    arma::vec fHconfig_sum_local(row_nb, arma::fill::zeros);
 
-     // f_c is a thread-local object (each thread has its own f_c)
-     arma::vec f_c(row_nb);
+    // f_c is a thread-local object (each thread has its own f_c)
+    arma::vec f_c(row_nb);
 
-     //Loop on configurations: updating prior
-     #pragma omp for
-     for(arma::uword c=0; c<nb_config; ++c){
+    //Loop on configurations: updating prior
+    #pragma omp for
+    for(arma::uword c=0; c<nb_config; ++c){
 
-       //computation of the density f_c
-       f_c.fill(0.0);
+      //computation of the density f_c
+      f_c.fill(0.0);
 
-       const int* h = HconfigPtr[c];
+      const int* h = HconfigPtr[c];
 
-       for(arma::uword i=0; i<row_nb; ++i) {
-         double sum = 0;
-         for (arma::uword j = 0; j < col_nb; ++j) {
-           if ( h[(size_t)j] == 0) sum += Logf0Mat.at(i,j);
-           else sum += Logf1Mat.at(i, j);
-         }
-         f_c.at(i) = sum;
-       }
+      for(arma::uword i=0; i<row_nb; ++i) {
+        double sum = 0;
+        for (arma::uword j = 0; j < col_nb; ++j) {
+          if ( h[(size_t)j] == 0) sum += Logf0Mat.at(i,j);
+          else sum += Logf1Mat.at(i, j);
+        }
+        f_c.at(i) = sum;
+      }
 
-       // f_c = exp(f_c);
-       for(arma::uword i=0; i<row_nb; ++i) { f_c.at(i) = exp(f_c.at(i)); }
+      // f_c = exp(f_c);
+      for(arma::uword i=0; i<row_nb; ++i) { f_c.at(i) = exp(f_c.at(i)); }
 
-       //update fHconfig_sum_local
-       for(arma::uword i=0; i<row_nb; ++i){
-         fHconfig_sum_local.at(i) += NewPrior.at(c) * f_c.at(i);
-       }
+      //update fHconfig_sum_local
+      for(arma::uword i=0; i<row_nb; ++i){
+        fHconfig_sum_local.at(i) += NewPrior.at(c) * f_c.at(i);
+      }
 
-     }
-     // Sum the thread-local results in the final result within the critical section (one thread at a time).
-     #pragma omp critical
-     fHconfig_sum += fHconfig_sum_local;
+    }
+    // Sum the thread-local results in the final result within the critical section (one thread at a time).
+    #pragma omp critical
+    fHconfig_sum += fHconfig_sum_local;
 
-   } // end of multi-threaded section
+  } // end of multi-threaded section
 
-   return fHconfig_sum;
- }
+  return fHconfig_sum;
+}
 
 
  
@@ -263,102 +274,103 @@ arma::vec fHconfig_sum_update_gaussian_copula_ptr_parallel(const List & Hconfig,
                                                             const arma::mat & Rinv,
                                                             int threads_nb = 0 ) {
    
-   if(threads_nb < 0) threads_nb = 1;
-   // The number of thread is set to the number of core available by default.
-   // and limited to the number of core available if a higher number is asked.
-   #ifdef _OPENMP
-   int max_threads_nb = omp_get_num_procs();
-   #else
-   int max_threads_nb = 1;
-   #endif
-   if(threads_nb > max_threads_nb || threads_nb == 0) threads_nb = max_threads_nb;
+  if(threads_nb < 0) threads_nb = 1;
+  // The number of thread is set to the number of core available by default.
+  // and limited to the number of core available if a higher number is asked.
+  #ifdef _OPENMP
+  int max_threads_nb = omp_get_num_procs();
+  #else
+  int max_threads_nb = 1;
+  #endif
+  if(threads_nb > max_threads_nb || threads_nb == 0) threads_nb = max_threads_nb;
    
-   // Get the dimensions
-   arma::uword row_nb = Logf0Mat.n_rows;
-   arma::uword col_nb = Logf0Mat.n_cols;
-   arma::uword nb_config = Hconfig.size();
-   // Check the dimensions
-   if(NewPrior.size() != nb_config)
-     stop("OldPrior and Hconfig lengths are different.");
-   if(Logf1Mat.n_rows != row_nb || Logf1Mat.n_cols != col_nb)
-     stop("Logf0Mat and Logf1Mat Dimensions are different.");
+  // Get the dimensions
+  arma::uword row_nb = Logf0Mat.n_rows;
+  arma::uword col_nb = Logf0Mat.n_cols;
+  arma::uword nb_config = Hconfig.size();
+  // Check the dimensions
+  if(NewPrior.size() != nb_config)
+    stop("OldPrior and Hconfig lengths are different.");
+  if(Logf1Mat.n_rows != row_nb || Logf1Mat.n_cols != col_nb)
+    stop("Logf0Mat and Logf1Mat Dimensions are different.");
    
-   std::vector<const int*> HconfigPtr(nb_config);
+  std::vector<const int*> HconfigPtr(nb_config);
    
-   for(size_t i=0; i<nb_config; ++i){
-     const IntegerVector v = Hconfig[i];
-     HconfigPtr[i] = &(v[0]);
-   }
-   
-   
-   // Initialization
-   // final fHconfig_sum, shared among all threads
-   // => we cannot use this object in the parallel for loop,
-   // See fHconfig_sum_local declaration below.
-   arma::vec fHconfig_sum(row_nb, arma::fill::zeros);
-   arma::mat Rinv_I = Rinv - arma::eye(col_nb, col_nb);
-   double sqrt_detR = sqrt(arma::det(R));
-   
-   // beginning of the multi-thread section. Each thread executes this section.
-#pragma omp parallel num_threads(threads_nb)
-{
-  // fHconfig_sum_local is a thread-local object, will accumulate the results for each thread,
-  // each of these thread-local objects value will later be accumulated in the final fHconfig_sum. 
-  arma::vec fHconfig_sum_local(row_nb, arma::fill::zeros);
-  
-  // xxx_c is a thread-local object (each thread has its own xxx_c)
-  arma::vec f_c(row_nb);
-  arma::vec copula_c(row_nb);
-  arma::mat zeta_c(row_nb,col_nb);
-  
-  //Loop on configurations: updating prior
-#pragma omp for
-  for(arma::uword c=0; c<nb_config; ++c){
-    
-    //computation of the density f_c and zeta_c
-    f_c.fill(0.0);
-    copula_c.fill(0.0);
-    zeta_c.fill(0.0);
-    
-    
-    const int* h = HconfigPtr[c];
-    
-    for(arma::uword i=0; i<row_nb; ++i) {
-      double sum = 0;
-      for (arma::uword j = 0; j < col_nb; ++j) {
-        if ( h[(size_t)j] == 0) {sum += Logf0Mat.at(i,j);
-          zeta_c.at(i,j) = zeta0.at(i,j);}
-        else { // h[j] == 1
-          sum += Logf1Mat.at(i, j);
-          zeta_c.at(i,j) = zeta1.at(i,j);
-        }
-      }
-      f_c.at(i) = sum;
-    }
-    
-    
-    // f_c = exp(f_c);
-    for(arma::uword i=0; i<row_nb; ++i) { f_c.at(i) = exp(f_c.at(i)); }
-    
-    //computation of the gaussian copula density  
-    for(arma::uword i=0; i<row_nb; ++i) {
-      copula_c.at(i) = (1/sqrt_detR) * exp(-0.5*arma::dot(zeta_c.row(i), Rinv_I*zeta_c.row(i).t()));
-    }
-    
-    //update fHconfig_sum_local
-    for(arma::uword i=0; i<row_nb; ++i){
-      fHconfig_sum_local.at(i) += NewPrior.at(c) * f_c.at(i) * copula_c.at(i);
-    }
-    
+  for(size_t i=0; i<nb_config; ++i){
+    const IntegerVector v = Hconfig[i];
+    HconfigPtr[i] = &(v[0]);
   }
-  // Sum the thread-local results in the final result within the critical section (one thread at a time).
-#pragma omp critical
-  fHconfig_sum += fHconfig_sum_local;
+   
+   
+  // Initialization
+  // final fHconfig_sum, shared among all threads
+  // => we cannot use this object in the parallel for loop,
+  // See fHconfig_sum_local declaration below.
+  arma::vec fHconfig_sum(row_nb, arma::fill::zeros);
+  arma::mat Rinv_I = Rinv - arma::eye(col_nb, col_nb);
+  double sqrt_detR = sqrt(arma::det(R));
+   
+  // beginning of the multi-thread section. Each thread executes this section.
+  #pragma omp parallel num_threads(threads_nb)
+  {
+    // fHconfig_sum_local is a thread-local object, will accumulate the results for each thread,
+    // each of these thread-local objects value will later be accumulated in the final fHconfig_sum. 
+    arma::vec fHconfig_sum_local(row_nb, arma::fill::zeros);
+  
+    // xxx_c is a thread-local object (each thread has its own xxx_c)
+    arma::vec f_c(row_nb);
+    arma::vec copula_c(row_nb);
+    arma::mat zeta_c(row_nb,col_nb);
+  
+    //Loop on configurations: updating prior
+    #pragma omp for
+    for(arma::uword c=0; c<nb_config; ++c){
+    
+      //computation of the density f_c and zeta_c
+      f_c.fill(0.0);
+      copula_c.fill(0.0);
+      zeta_c.fill(0.0);
+      
+      
+      const int* h = HconfigPtr[c];
+      
+      for(arma::uword i=0; i<row_nb; ++i) {
+        double sum = 0;
+        for (arma::uword j = 0; j < col_nb; ++j) {
+          if ( h[(size_t)j] == 0) {
+            sum += Logf0Mat.at(i,j);
+            zeta_c.at(i,j) = zeta0.at(i,j);
+          }
+          else { // h[j] == 1
+            sum += Logf1Mat.at(i, j);
+            zeta_c.at(i,j) = zeta1.at(i,j);
+          }
+        }
+        f_c.at(i) = sum;
+      }
+      
+      
+      // f_c = exp(f_c);
+      for(arma::uword i=0; i<row_nb; ++i) { f_c.at(i) = exp(f_c.at(i)); }
+    
+      //computation of the gaussian copula density  
+      for(arma::uword i=0; i<row_nb; ++i) {
+        copula_c.at(i) = (1/sqrt_detR) * exp(-0.5*arma::dot(zeta_c.row(i), Rinv_I*zeta_c.row(i).t()));
+      }
+    
+      //update fHconfig_sum_local
+      for(arma::uword i=0; i<row_nb; ++i){
+        fHconfig_sum_local.at(i) += NewPrior.at(c) * f_c.at(i) * copula_c.at(i);
+      }
+    }
+    // Sum the thread-local results in the final result within the critical section (one thread at a time).
+    #pragma omp critical
+    fHconfig_sum += fHconfig_sum_local;
 
-} // end of multi-threaded section
+  } // end of multi-threaded section
 
-return fHconfig_sum;
- }
+  return fHconfig_sum;
+}
  
  
  
@@ -388,48 +400,48 @@ arma::vec prior_update_gaussian_copula_ptr_parallel(const List & Hconfig,
                                                      int threads_nb = 0) {
    
    
-   if(threads_nb < 0) threads_nb = 1;
-   // The number of thread is set to the number of core available by default.
-   // and limited to the number of core available if a higher number is asked.
-   #ifdef _OPENMP
-   int max_threads_nb = omp_get_num_procs();
-   #else
-   int max_threads_nb = 1;
-   #endif
-   if(threads_nb > max_threads_nb || threads_nb == 0) threads_nb = max_threads_nb;
+  if(threads_nb < 0) threads_nb = 1;
+  // The number of thread is set to the number of core available by default.
+  // and limited to the number of core available if a higher number is asked.
+  #ifdef _OPENMP
+  int max_threads_nb = omp_get_num_procs();
+  #else
+  int max_threads_nb = 1;
+  #endif
+  if(threads_nb > max_threads_nb || threads_nb == 0) threads_nb = max_threads_nb;
+  
+  // Get the dimensions
+  arma::uword row_nb = Logf0Mat.n_rows;
+  arma::uword col_nb = Logf0Mat.n_cols;
+  arma::uword nb_config = Hconfig.size();
+  // Check the dimensions
+  if(OldPrior.size() != nb_config)
+    stop("OldPrior and Hconfig lengths are different.");
+  if(fHconfig_sum.size() != row_nb)
+    stop("fHconfig_sum length and Logf0Mat number of rows are different.");
+  if(Logf1Mat.n_rows != row_nb || Logf1Mat.n_cols != col_nb)
+    stop("Logf0Mat and Logf1Mat Dimensions are different.");
    
-   // Get the dimensions
-   arma::uword row_nb = Logf0Mat.n_rows;
-   arma::uword col_nb = Logf0Mat.n_cols;
-   arma::uword nb_config = Hconfig.size();
-   // Check the dimensions
-   if(OldPrior.size() != nb_config)
-     stop("OldPrior and Hconfig lengths are different.");
-   if(fHconfig_sum.size() != row_nb)
-     stop("fHconfig_sum length and Logf0Mat number of rows are different.");
-   if(Logf1Mat.n_rows != row_nb || Logf1Mat.n_cols != col_nb)
-     stop("Logf0Mat and Logf1Mat Dimensions are different.");
+  std::vector<const int*> HconfigPtr(nb_config);
+  for(size_t i=0; i<nb_config; ++i){
+    const IntegerVector v = Hconfig[i];
+    HconfigPtr[i] = &(v[0]);
+  }
    
-   std::vector<const int*> HconfigPtr(nb_config);
-   for(size_t i=0; i<nb_config; ++i){
-     const IntegerVector v = Hconfig[i];
-     HconfigPtr[i] = &(v[0]);
-   }
+  // Initialization
+  arma::vec NewPrior(nb_config);
+  arma::mat Rinv_I = Rinv- arma::eye(col_nb, col_nb);
+  double sqrt_detR = sqrt(arma::det(R));
    
-   // Initialization
-   arma::vec NewPrior(nb_config);
-   arma::mat Rinv_I = Rinv- arma::eye(col_nb, col_nb);
-   double sqrt_detR = sqrt(arma::det(R));
-   
-   // beginning of the multi-thread section.
-   // Every variable/object declared above this section is shared by all the threads.
-   // Every variable/object declared inside this section is private (local) to each thread.
-#pragma omp parallel num_threads(threads_nb)
-{
-  // xxx_c is a thread-local object (each thread has its own xxx_c)
-  arma::vec f_c(row_nb);
-  arma::vec copula_c(row_nb);
-  arma::mat zeta_c(row_nb,col_nb);
+  // beginning of the multi-thread section.
+  // Every variable/object declared above this section is shared by all the threads.
+  // Every variable/object declared inside this section is private (local) to each thread.
+  #pragma omp parallel num_threads(threads_nb)
+  {
+    // xxx_c is a thread-local object (each thread has its own xxx_c)
+    arma::vec f_c(row_nb);
+    arma::vec copula_c(row_nb);
+    arma::mat zeta_c(row_nb,col_nb);
   
   // Loop on configurations: updating prior
   // Iterations are equaly distributed among threads.
@@ -438,54 +450,56 @@ arma::vec prior_update_gaussian_copula_ptr_parallel(const List & Hconfig,
   // 2nd thread 64 to 127
   // 3rd thread 128 to 191
   // 4th thread 192 to 255
-#pragma omp for
-  for(arma::uword c=0; c<nb_config; ++c){
+
+    #pragma omp for
+    for(arma::uword c=0; c<nb_config; ++c){
+      
+      //computation of the density f_c
+      f_c.fill(0.0);
+      copula_c.fill(0.0);
+      zeta_c.fill(0.0);
     
-    //computation of the density f_c
-    f_c.fill(0.0);
-    copula_c.fill(0.0);
-    zeta_c.fill(0.0);
-    
-    // arma::ivec advanced constructor allows to use the memory address of the vector data stored externally without copying it.
-    // const arma::ivec h(HconfigPtr[c], col_nb, false, true);
-    // However, we don't need to embed this memory block in a arma::ivec object since it is not implied in vector/matrix operations.
-    //     => We can use it as is.
-    // h can be used as a pure C array.
-    const int* h = HconfigPtr[c];
-    
-    for(arma::uword i=0; i<row_nb; ++i) {
-      double sum = 0;
-      for (arma::uword j = 0; j < col_nb; ++j) {
-        if ( h[(size_t)j] == 0){
-          sum += Logf0Mat.at(i,j);
-          zeta_c.at(i,j) = zeta0.at(i,j);
-        }else { // h[j] == 1
-          sum += Logf1Mat.at(i, j);
-          zeta_c.at(i,j) = zeta1.at(i,j);
+      // arma::ivec advanced constructor allows to use the memory address of the vector data stored externally without copying it.
+      // const arma::ivec h(HconfigPtr[c], col_nb, false, true);
+      // However, we don't need to embed this memory block in a arma::ivec object since it is not implied in vector/matrix operations.
+      //     => We can use it as is.
+      // h can be used as a pure C array.
+      const int* h = HconfigPtr[c];
+      
+      for(arma::uword i=0; i<row_nb; ++i) {
+        double sum = 0;
+        for (arma::uword j = 0; j < col_nb; ++j) {
+          if ( h[(size_t)j] == 0){
+            sum += Logf0Mat.at(i,j);
+            zeta_c.at(i,j) = zeta0.at(i,j);
+          }
+          else { // h[j] == 1
+            sum += Logf1Mat.at(i, j);
+            zeta_c.at(i,j) = zeta1.at(i,j);
+          }
+          f_c.at(i) = sum;
         }
-        f_c.at(i) = sum;
       }
-    }
     
-    for(arma::uword i=0; i<row_nb; ++i) { f_c.at(i) = exp(f_c.at(i)); }
+      for(arma::uword i=0; i<row_nb; ++i) { f_c.at(i) = exp(f_c.at(i)); }
+      
+      //computation of the gaussian copula density  
+      for(arma::uword i=0; i<row_nb; ++i){
+        copula_c.at(i) = (1/sqrt_detR) * exp(-0.5*arma::dot(zeta_c.row(i), Rinv_I*zeta_c.row(i).t()));
+      }
     
-    //computation of the gaussian copula density  
-    for(arma::uword i=0; i<row_nb; ++i){
-      copula_c.at(i) = (1/sqrt_detR) * exp(-0.5*arma::dot(zeta_c.row(i), Rinv_I*zeta_c.row(i).t()));
+      //update the prior
+      // NewPrior.at(c) = mean(OldPrior.at(c)*f_c/fHconfig_sum);
+      double sum = 0;
+      double oldPrior_c = OldPrior.at(c);
+      for(arma::uword k = 0; k<row_nb;++k){
+        sum += oldPrior_c*f_c.at(k)*copula_c.at(k)/fHconfig_sum.at(k);
+      }
+      NewPrior.at(c) = sum/row_nb;
     }
-    
-    //update the prior
-    // NewPrior.at(c) = mean(OldPrior.at(c)*f_c/fHconfig_sum);
-    double sum = 0;
-    double oldPrior_c = OldPrior.at(c);
-    for(arma::uword k = 0; k<row_nb;++k){
-      sum += oldPrior_c*f_c.at(k)*copula_c.at(k)/fHconfig_sum.at(k);
-    }
-    NewPrior.at(c) = sum/row_nb;
-  }
-} // end of multi-threaded section
-return NewPrior;
- }
+  } // end of multi-threaded section
+  return NewPrior;
+}
  
 //' Update the estimate of R correlation matrix of the gaussian copula, parallelized version 
 //'@param  Hconfig list of vector of 0 and 1, corresponding to the configurations
@@ -513,104 +527,206 @@ arma::mat R_MLE_update_gaussian_copula_ptr_parallel(const List & Hconfig,
                                                      const arma::mat & RhoIndex,
                                                      int threads_nb = 0) {
    
-   if(threads_nb < 0) threads_nb = 1;
-   // The number of thread is set to the number of core available by default.
-   // and limited to the number of core available if a higher number is asked.
-   #ifdef _OPENMP
-   int max_threads_nb = omp_get_num_procs();
-   #else
-   int max_threads_nb = 1;
-   #endif
-   if(threads_nb > max_threads_nb || threads_nb == 0) threads_nb = max_threads_nb;
-   
-   // Get the dimensions
-   arma::uword row_nb = Logf0Mat.n_rows;
-   arma::uword col_nb = Logf0Mat.n_cols;
-   arma::uword nb_config = Hconfig.size();
-   // Check the dimensions
-   if(OldPrior.size() != nb_config)
-     stop("OldPrior and Hconfig lengths are different.");
-   if(Logf1Mat.n_rows != row_nb || Logf1Mat.n_cols != col_nb)
-     stop("Logf0Mat and Logf1Mat Dimensions are different.");
-   
-   std::vector<const int*> HconfigPtr(nb_config);
-   // int** HconfigPtr = new int*[nb_config];
-   for(size_t i=0; i<nb_config; ++i){
-     const IntegerVector v = Hconfig[i];
-     HconfigPtr[i] = &(v[0]);
-   }
-   
-   // Initialization
-   arma::vec NewRho(RhoIndex.n_rows, arma::fill::zeros);
-   arma::mat OldRinv_I = OldRinv - arma::eye(col_nb, col_nb);
-   double sqrt_detOldR = sqrt(arma::det(OldR));
-   
-   // beginning of the multi-thread section. Each thread executes this section.
-#pragma omp parallel num_threads(threads_nb)
-{
-  // NewRho_local is a thread-local object, will accumulate the results for each thread,
-  // each of these thread-local objects value will later be accumulated in the final NewRho. 
-  arma::vec NewRho_local(RhoIndex.n_rows, arma::fill::zeros);
+  if(threads_nb < 0) threads_nb = 1;
+  // The number of thread is set to the number of core available by default.
+  // and limited to the number of core available if a higher number is asked.
+  #ifdef _OPENMP
+  int max_threads_nb = omp_get_num_procs();
+  #else
+  int max_threads_nb = 1;
+  #endif
+  if(threads_nb > max_threads_nb || threads_nb == 0) threads_nb = max_threads_nb;
   
-  // xxx_c is a thread-local object (each thread has its own xxx_c)
-  arma::vec f_c(row_nb);
-  arma::vec copula_c(row_nb);
-  arma::mat zeta_c(row_nb,col_nb);
+  // Get the dimensions
+  arma::uword row_nb = Logf0Mat.n_rows;
+  arma::uword col_nb = Logf0Mat.n_cols;
+  arma::uword nb_config = Hconfig.size();
+  // Check the dimensions
+  if(OldPrior.size() != nb_config)
+    stop("OldPrior and Hconfig lengths are different.");
+  if(Logf1Mat.n_rows != row_nb || Logf1Mat.n_cols != col_nb)
+    stop("Logf0Mat and Logf1Mat Dimensions are different.");
+   
+  std::vector<const int*> HconfigPtr(nb_config);
+  // int** HconfigPtr = new int*[nb_config];
+  for(size_t i=0; i<nb_config; ++i){
+    const IntegerVector v = Hconfig[i];
+    HconfigPtr[i] = &(v[0]);
+  }
+   
+  // Initialization
+  arma::vec NewRho(RhoIndex.n_rows, arma::fill::zeros);
+  arma::mat OldRinv_I = OldRinv - arma::eye(col_nb, col_nb);
+  double sqrt_detOldR = sqrt(arma::det(OldR));
+   
+  // beginning of the multi-thread section. Each thread executes this section.
+  #pragma omp parallel num_threads(threads_nb)
+  {
+    // NewRho_local is a thread-local object, will accumulate the results for each thread,
+    // each of these thread-local objects value will later be accumulated in the final NewRho. 
+    arma::vec NewRho_local(RhoIndex.n_rows, arma::fill::zeros);
+    
+    // xxx_c is a thread-local object (each thread has its own xxx_c)
+    arma::vec f_c(row_nb);
+    arma::vec copula_c(row_nb);
+    arma::mat zeta_c(row_nb,col_nb);
   
-  //Loop on configurations: updating prior
-#pragma omp for
-  for(arma::uword c=0; c<nb_config; ++c){
-    
-    //computation of the density f_c and zeta_c
-    f_c.fill(0.0);
-    copula_c.fill(0.0);
-    zeta_c.fill(0.0);
-    
-    const int* h = HconfigPtr[c];
-    
-    for(arma::uword i=0; i<row_nb; ++i) {
-      double sum = 0;
-      for (arma::uword j = 0; j < col_nb; ++j) {
-        if ( h[(size_t)j] == 0) {sum += Logf0Mat.at(i,j);
-          zeta_c.at(i,j) = zeta0.at(i,j);}
-        else { // h[j] == 1
-          sum += Logf1Mat.at(i, j);
-          zeta_c.at(i,j) = zeta1.at(i,j);
+    //Loop on configurations: updating prior
+    #pragma omp for
+    for(arma::uword c=0; c<nb_config; ++c){
+      
+      //computation of the density f_c and zeta_c
+      f_c.fill(0.0);
+      copula_c.fill(0.0);
+      zeta_c.fill(0.0);
+      
+      const int* h = HconfigPtr[c];
+      
+      for(arma::uword i=0; i<row_nb; ++i) {
+        double sum = 0;
+        for (arma::uword j = 0; j < col_nb; ++j) {
+          if ( h[(size_t)j] == 0) {
+            sum += Logf0Mat.at(i,j);
+            zeta_c.at(i,j) = zeta0.at(i,j);
+          }
+          else { // h[j] == 1
+            sum += Logf1Mat.at(i, j);
+            zeta_c.at(i,j) = zeta1.at(i,j);
+          }
+          f_c.at(i) = sum;
         }
-        f_c.at(i) = sum;
+      }
+    
+      // f_c = exp(f_c);
+      for(arma::uword i=0; i<row_nb; ++i) { f_c.at(i) = exp(f_c.at(i)); }
+      
+      
+      //computation of the gaussian copula density  
+      for(arma::uword i=0; i<row_nb; ++i) {
+        copula_c.at(i) = (1/sqrt_detOldR) * exp(-0.5*arma::dot(zeta_c.row(i), OldRinv_I*zeta_c.row(i).t()));
+      }
+    
+      //Computation of NewRho_local
+      for(arma::uword index=0; index<RhoIndex.n_rows; index++){
+        for(arma::uword i = 0; i<row_nb; ++i){
+          NewRho_local.at(index) +=  OldPrior.at(c)*f_c.at(i)*copula_c.at(i)/fHconfig_sum.at(i)*zeta_c.at(i,RhoIndex.at(index,0)-1)*zeta_c.at(i,RhoIndex.at(index,1)-1);
+        }
       }
     }
-    
-    // f_c = exp(f_c);
-    for(arma::uword i=0; i<row_nb; ++i) { f_c.at(i) = exp(f_c.at(i)); }
-    
-    
-    //computation of the gaussian copula density  
-    for(arma::uword i=0; i<row_nb; ++i) {
-      copula_c.at(i) = (1/sqrt_detOldR) * exp(-0.5*arma::dot(zeta_c.row(i), OldRinv_I*zeta_c.row(i).t()));
-    }
-    
-    //Computation of NewRho_local
+    // Sum the thread-local results in the final result within the critical section (one thread at a time).
+    #pragma omp critical
     for(arma::uword index=0; index<RhoIndex.n_rows; index++){
-      for(arma::uword i = 0; i<row_nb; ++i){
-        NewRho_local.at(index) +=  OldPrior.at(c)*f_c.at(i)*copula_c.at(i)/fHconfig_sum.at(i)*zeta_c.at(i,RhoIndex.at(index,0)-1)*zeta_c.at(i,RhoIndex.at(index,1)-1);
-      }
+      NewRho.at(index) +=  NewRho_local.at(index);
     }
-    
-  }
-  // Sum the thread-local results in the final result within the critical section (one thread at a time).
-#pragma omp critical
-  for(arma::uword index=0; index<RhoIndex.n_rows; index++){
-    NewRho.at(index) +=  NewRho_local.at(index);
-  }
-} // end of multi-threaded section
+  } // end of multi-threaded section
 
-// Reconstruction de la matrice
-arma::mat NewR(col_nb,col_nb);
-for(arma::uword index=0; index<RhoIndex.n_rows; index++){
-  NewR.at(RhoIndex.at(index,0)-1,RhoIndex.at(index,1)-1) = NewRho.at(index)/row_nb ;
-  NewR.at(RhoIndex.at(index,1)-1,RhoIndex.at(index,0)-1) = NewRho.at(index)/row_nb ;
+  // Reconstruction de la matrice
+  arma::mat NewR(col_nb,col_nb);
+  for(arma::uword index=0; index<RhoIndex.n_rows; index++){
+    NewR.at(RhoIndex.at(index,0)-1,RhoIndex.at(index,1)-1) = NewRho.at(index)/row_nb ;
+    NewR.at(RhoIndex.at(index,1)-1,RhoIndex.at(index,0)-1) = NewRho.at(index)/row_nb ;
+  }
+
+  return NewR;
 }
 
-return NewR;
- }
+
+/* ************************************************************************** */
+/*                                                                            */
+/*     C++ sub-routines used in the R function integral.kde_adapted()         */
+/*                                                                            */
+/* ************************************************************************** */
+
+//' This function is a re-implementation of the initial R loop computing 
+//' last incomplete trapezoid. See R function integral.kde_adapted().
+//' @param q_prob reference of the vector q_prob containing the probability of each quantile q
+//' @param q_ind reference of the vector q_ind 
+//' @param q reference of the vector q containing the quantiles
+//' @param eval reference of the vector eval 
+//' @param est reference of the vector est
+//' @param simp_rule reference of the vector simp_rule
+//' @param density logical
+//' @return void. Its first argument q_prob is passed as a reference and modified in place.
+// [[Rcpp::export]]
+void last_incomplete_trapezoid_arma(arma::vec & q_prob,
+                                const arma::ivec & q_ind,
+                                const arma::vec & q,
+                                const arma::vec & eval,
+                                const arma::vec & est,
+                                const arma::vec & simp_rule,
+                                bool density = true){
+  int n = q_ind.size();
+  int gridsize = eval.size();
+  const double * const simp_rule_ptr = &(simp_rule[0]);
+  
+  double simp_rule_sum = arma::sum(simp_rule);
+  for (int i = 0; i<n; i++) {
+    const int qi = q_ind[i]-1; // C++ indexing
+    if (qi == -1) q_prob[i] = 0; // 
+    else if (qi < gridsize-1) {
+       // linearly interpolate kde
+       double delqi = q[i] - eval[qi];
+       double estqi = (est[qi+1] - est[qi])/(eval[qi+1] - eval[qi]) * delqi + est[qi];
+       double delta = estqi - est[qi];
+       // (delta < 0.0 ? estqi : est[qi]) is equivalent to min(estqi, est[qi])
+       double simp_ruleqi = (delta < 0.0 ? estqi : est[qi])*delqi + 0.5*fabs(delta)*delqi; 
+       // Using standard C++ accumulate function to compute partial sum 
+       q_prob[i] = std::accumulate(simp_rule_ptr, simp_rule_ptr + qi+1, 0.0) + simp_ruleqi;
+    }
+    else { // qi >= gridsize
+      if (density) q_prob[i] = 1;
+      else q_prob[i] = simp_rule_sum;
+    }
+  }
+}
+
+//' This function is a re-implementation of the initial R side while loop. 
+//' See the end of R function integral.kde_adapted().
+//' As shown in the commentary below, it is twice as slow to handle the index ordering 
+//' of the vector q (2nd argument) here with the function arma::sort_index().
+//' Consequently, it is recommended to use the function remove_decreasing_values_cpp() instead.
+//' @param q_prob reference of the vector q_prob 
+//' @param q reference of the vector q 
+//' @param tol By default 1e-10
+//' @return void. Its first argument q_prob is passed as a reference and modified in place.
+// [[Rcpp::export]]
+void remove_decreasing_values_cpp_slow_ordering(arma::vec & q_prob,
+                                       const arma::vec & q,
+                                       double tol = 1e-10){
+  
+  arma::uword n = q_prob.size();
+  // RcppArmadillo equivalent of base R function order(), but twice as slow ...
+  arma::uvec order_q = arma::sort_index(q);
+  
+  double prev = q_prob[order_q[0]];
+  for(arma::uword i=1; i<n; i++){
+    double & current = q_prob[order_q[i]];
+    // current is a reference to q_prob[order_q[i]] => modifying current also modify q_prob
+    if( (current - prev) < -tol) current = prev;
+    prev = current;
+  }
+}
+
+//' Same as function above but does not handle the index ordering of the vector q. 
+//' Therefore, the 2nd argument order_q has to be an index ordered version of the vector q.
+//' Indeed, the R base function: order() is twice as fast as the arma::sort_index(q)
+//' This is therefore the recommended function to use.
+//' @param q_prob reference of the vector q_prob 
+//' @param order_q reference of the vector q 
+//' @param tol By default 1e-10
+//' @return void. Its first argument q_prob is passed as a reference and modified in place.
+// [[Rcpp::export]]
+void remove_decreasing_values_cpp(arma::vec & q_prob,
+                                       const arma::ivec & order_q,
+                                       double tol = 1e-10){
+  
+  arma::uword n = q_prob.size();
+  
+  double prev = q_prob[order_q[0]];
+  for(arma::uword i=1; i<n; i++){
+    double & current = q_prob[order_q[i]];
+    // current is a reference to q_prob[order_q[i]] => modifying current also modify q_prob
+    if( (current - prev) < -tol) current = prev;
+    prev = current;
+  }
+}

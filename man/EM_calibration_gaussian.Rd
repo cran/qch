@@ -11,7 +11,8 @@ EM_calibration_gaussian(
   fHconfig,
   R.init,
   Prior.init,
-  Precision = 1e-06
+  Precision = 1e-06,
+  max_iter = 10000
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ EM_calibration_gaussian(
 \item{Prior.init}{the initialization of prior probabilities for each of the H-configurations.}
 
 \item{Precision}{Precision for the stop criterion. (Default is 1e-6)}
+
+\item{max_iter}{the maximum number of iterations allowed for the algorithm to converge or complete its process.(Default is 1e4.)}
 }
 \value{
 A list with the following elements:

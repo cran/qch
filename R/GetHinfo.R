@@ -1,3 +1,14 @@
+
+###########################################################################
+#                                GetHinfo.R                               #
+#                                                                         #
+#   This program is free software; you can redistribute it and/or modify  #
+#   it under the terms of the GNU General Public License as published by  #
+#   the Free Software Foundation; either version 3 of the License, or     #
+#   (at your option) any later version.                                   #
+#                                                                         #
+###########################################################################
+
 ###################################################################
 #' Generate the \eqn{H_0}/\eqn{H_1} configurations.
 #'
@@ -26,7 +37,7 @@ GetHconfig <- function(Q, Signed = FALSE) {
   names(Hconfig) <- sapply(Hconfig, function(h) {
     paste(h, collapse = "/")
   })
-
+  
   ## Collect results
   return(Hconfig)
 }

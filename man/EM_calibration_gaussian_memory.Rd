@@ -13,7 +13,8 @@ EM_calibration_gaussian_memory(
   R.init,
   Hconfig,
   Precision = 1e-06,
-  threads_nb
+  threads_nb,
+  max_iter = 10000
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ EM_calibration_gaussian_memory(
 \item{Precision}{Precision for the stop criterion. (Default is 1e-6)}
 
 \item{threads_nb}{The number of threads to use.}
+
+\item{max_iter}{the maximum number of iterations allowed for the algorithm to converge or complete its process.(Default is 1e4.)}
 }
 \value{
 A list with the following elements:

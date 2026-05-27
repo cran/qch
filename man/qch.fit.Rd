@@ -9,6 +9,7 @@ qch.fit(
   EffectMat = NULL,
   Hconfig,
   copula = "indep",
+  memory_efficient_EM = FALSE,
   threads_nb = 0,
   plotting = FALSE,
   Precision = 1e-06
@@ -25,9 +26,15 @@ If specified, the procedure will account for the direction of the effect. (optio
 \item{copula}{A string specifying the form of copula to use. Possible values are "\code{indep}"and "\code{gaussian}".
 Default is "\code{indep}" corresponding to the independent case.}
 
-\item{threads_nb}{The number of threads to use. The number of thread will set to the number of cores available by default.}
+\item{memory_efficient_EM}{Logical. If \code{TRUE}, use the memory-efficient implementation of the EM algorithm.
+This option is recommended for large datasets, as it reduces memory usage at the cost of additional computation time.
+The memory-efficient implementation is automatically used when the size of the \code{posterior} matrix exceeds 2 GB.}
 
-\item{plotting}{A boolean. Should some diagnostic graphs be plotted ? Default is \code{FALSE}.}
+\item{threads_nb}{Integer. Number of threads to use for parallel computation.
+This parameter is only used when \code{memory_efficient_EM = TRUE}.
+By default, the number of threads is set to the number of available CPU cores.}
+
+\item{plotting}{Logical. Should some diagnostic graphs be plotted ? Default is \code{FALSE}.}
 
 \item{Precision}{The precision for EM algorithm to infer the parameters. Default is \code{1e-6}.}
 }
@@ -43,7 +50,7 @@ for each of the H-configurations.\cr
 }
 
 \itemize{
-\item If the storage permits, the list will additionally contain:
+\item If the memory efficient version of EM algorithm is not used, the list will additionally contain:
 \tabular{ll}{
 \code{posterior} \tab matrix providing for each item (in row) its posterior probability to
 belong to each of the H-configurations (in columns).\cr

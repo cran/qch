@@ -4,7 +4,7 @@
 \alias{EM_calibration_indep}
 \title{EM calibration in the case of conditional independence}
 \usage{
-EM_calibration_indep(fHconfig, Prior.init, Precision = 1e-06)
+EM_calibration_indep(fHconfig, Prior.init, Precision = 1e-06, max_iter = 10000)
 }
 \arguments{
 \item{fHconfig}{a matrix containing config densities evaluated at each items, each column corresponding to a configurations.}
@@ -12,6 +12,8 @@ EM_calibration_indep(fHconfig, Prior.init, Precision = 1e-06)
 \item{Prior.init}{the initialization of prior probabilities for each of the H-configurations.}
 
 \item{Precision}{Precision for the stop criterion. (Default is 1e-6)}
+
+\item{max_iter}{the maximum number of iterations allowed for the algorithm to converge or complete its process.(Default is 1e4.)}
 }
 \value{
 a vector of estimated prior probabilities for each of the H-configurations.

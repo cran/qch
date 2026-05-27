@@ -1,3 +1,14 @@
+
+###########################################################################
+#                                qch_test.R                               #
+#                                                                         #
+#   This program is free software; you can redistribute it and/or modify  #
+#   it under the terms of the GNU General Public License as published by  #
+#   the Free Software Foundation; either version 3 of the License, or     #
+#   (at your option) any later version.                                   #
+#                                                                         #
+###########################################################################
+
 #' @import utils
 ## quiets concerns of R CMD check re: the .'s that appear in pipelines
 # if(getRversion() >= "2.15.1")  utils::globalVariables(c(".",">"))
@@ -53,7 +64,7 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c(".", ":=", ".x", ">"))
 #'
 qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, threads_nb = 0) {
   Q <- log2(length(res.qch.fit$prior))
-
+  
   ### Check on Hconfig.H1
   if (!is.null(Hconfig.H1)) {
     if (!is.list(Hconfig.H1) & !is.integer(Hconfig.H1)) {
@@ -64,40 +75,38 @@ qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, thre
       Hconfig.H1 <- list(Hconfig.H1)
       names(Hconfig.H1) <- namesH1config
     }
-    if (purrr::map(Hconfig.H1, class) %>% `!=`("integer") %>% any() || map(Hconfig.H1, min) %>%
-      `<`(1) %>%
-      any() || map(Hconfig.H1, min) %>%
-      `>`(length(res.qch.fit$prior)) %>%
-      any()) {
+    if (any(purrr::map(Hconfig.H1, class) != "integer") 
+        || any(purrr::map(Hconfig.H1, min) < 1) 
+        || any(purrr::map(Hconfig.H1, max) > length(res.qch.fit$prior))) {
       stop(paste0("Each element of Hconfig.H1 should be a vector of index between 1 and ", length(res.qch.fit$prior), "."))
     }
   }
-
+  
   if (is.null(Hconfig.H1)) {
     Hconfig.H1 <- GetH1AtLeast(Hconfig, 1:Q)
   }
-
+  
   nb_test <- length(Hconfig.H1)
-
-
+  
+  
   if (!is.null(res.qch.fit$posterior)) {
     n <- nrow(res.qch.fit$posterior)
-
+    
     ### localFDR
     Tau1.list <- map(Hconfig.H1, ~ rowSums(res.qch.fit$posterior[, .x, drop = FALSE]))
-
+    
     Tau1_equals1_index.list <- map(Tau1.list, ~ which(.x >= 1))
     one_minus_Tau1equals1.list <- map(1:nb_test, ~ rowSums(res.qch.fit$posterior[Tau1_equals1_index.list[[.x]], -Hconfig.H1[[.x]], drop = FALSE]))
   } else if (!is.null(res.qch.fit$Rcopula)) {
     n <- nrow(res.qch.fit$f0Mat)
     Logf0Mat <- log(res.qch.fit$f0Mat)
     Logf1Mat <- log(res.qch.fit$f1Mat)
-
+    
     zeta0 <- qnorm(p = res.qch.fit$F0Mat, mean = 0, sd = 1)
     zeta1 <- qnorm(p = res.qch.fit$F1Mat, mean = 0, sd = 1)
-
+    
     RcopulaInv <- solve(res.qch.fit$Rcopula)
-
+    
     ### localFDR
     Tmp_Tau1.list <- map(Hconfig.H1, ~ {
       fHconfig_sumH1 <- fHconfig_sum_update_gaussian_copula_ptr_parallel(
@@ -111,11 +120,11 @@ qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, thre
         Rinv = RcopulaInv,
         threads_nb = threads_nb
       )
-
+      
       Tau1 <- fHconfig_sumH1 / res.qch.fit$fHconfig_sum
-
+      
       Tau1_equals1_index <- which(Tau1 >= 1)
-
+      
       if (length(Tau1_equals1_index) > 0) {
         one_minus_Tau1equals1 <- fHconfig_sum_update_gaussian_copula_ptr_parallel(
           Hconfig = Hconfig[-(.x)],
@@ -133,7 +142,7 @@ qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, thre
       }
       return(list("Tau1" = Tau1, "Tau1_equals1_index" = Tau1_equals1_index, "one_minus_Tau1equals1" = one_minus_Tau1equals1))
     })
-
+    
     Tau1.list <- map(Tmp_Tau1.list, ~ .x$Tau1)
     Tau1_equals1_index.list <- map(Tmp_Tau1.list, ~ .x$Tau1_equals1_index)
     one_minus_Tau1equals1.list <- map(Tmp_Tau1.list, ~ .x$one_minus_Tau1equals1)
@@ -141,7 +150,7 @@ qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, thre
     n <- nrow(res.qch.fit$f0Mat)
     Logf0Mat <- log(res.qch.fit$f0Mat)
     Logf1Mat <- log(res.qch.fit$f1Mat)
-
+    
     ### localFDR
     Tmp_Tau1.list <- map(Hconfig.H1, ~ {
       fHconfig_sumH1 <- fHconfig_sum_update_ptr_parallel(
@@ -152,9 +161,9 @@ qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, thre
         threads_nb = threads_nb
       )
       Tau1 <- fHconfig_sumH1 / res.qch.fit$fHconfig_sum
-
+      
       Tau1_equals1_index <- which(Tau1 >= 1)
-
+      
       if (length(Tau1_equals1_index) > 0) {
         one_minus_Tau1equals1 <- fHconfig_sum_update_ptr_parallel(
           Hconfig = Hconfig[-(.x)],
@@ -168,17 +177,17 @@ qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, thre
       }
       return(list("Tau1" = Tau1, "Tau1_equals1_index" = Tau1_equals1_index, "one_minus_Tau1equals1" = one_minus_Tau1equals1))
     })
-
+    
     Tau1.list <- map(Tmp_Tau1.list, ~ .x$Tau1)
     Tau1_equals1_index.list <- map(Tmp_Tau1.list, ~ .x$Tau1_equals1_index)
     one_minus_Tau1equals1.list <- map(Tmp_Tau1.list, ~ .x$one_minus_Tau1equals1)
   }
-
+  
   Order.list <- map(1:nb_test, ~ order(Tau1.list[[.x]], decreasing = TRUE))
   Order_lessthan1.list <- map(1:nb_test, ~ order(Tau1.list[[.x]][-Tau1_equals1_index.list[[.x]]], decreasing = TRUE))
   Order_equals1.list <- map(1:nb_test, ~ order(one_minus_Tau1equals1.list[[.x]], decreasing = FALSE))
-
-
+  
+  
   FDR.list <- map(1:nb_test, ~ {
     if (length(Tau1_equals1_index.list[[.x]]) > 0) {
       tmp1 <- cumsum(one_minus_Tau1equals1.list[[.x]][Order_equals1.list[[.x]]])
@@ -189,10 +198,10 @@ qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, thre
       return(tmp / (1:n))
     }
   })
-
-
+  
+  
   NbReject.vec <- map_int(1:nb_test, ~ max(which(FDR.list[[.x]] <= Alpha), 0))
-
+  
   Rejection.mat <- map_dfc(1:nb_test, function(q) {
     Rejection <- rep(0, n)
     if (NbReject.vec[q] > 0) {
@@ -205,10 +214,10 @@ qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, thre
     }
     setNames(data.frame(Rejection), names(Hconfig.H1)[q])
   })
-
+  
   localFDR.mat <- (1 - matrix(unlist(Tau1.list), ncol = nb_test)) %>% as.data.frame()
   colnames(localFDR.mat) <- names(Hconfig.H1)
-
+  
   ### Pvalue
   Pi0.vec <- map_dbl(1:nb_test, ~ (1 - sum(res.qch.fit$prior[Hconfig.H1[[.x]]])))
   EspTau0.list <- map(1:nb_test, ~ {
@@ -223,10 +232,10 @@ qch.test <- function(res.qch.fit, Hconfig, Hconfig.H1 = NULL, Alpha = 0.05, thre
     EspTau0[EspTau0 > 1] <- EspTau0[EspTau0 > 1] / max(EspTau0)
     return(EspTau0)
   })
-
+  
   Pval.qch.mat <- map_dfc(1:nb_test, function(q) {
     setNames(data.frame(EspTau0.list[[q]][n + 1 - rank(Tau1.list[[q]],ties.method = "max")]), names(Hconfig.H1)[q])
   })
-
+  
   return(list(Rejection = Rejection.mat, lFDR = localFDR.mat, Pvalues = Pval.qch.mat))
 }

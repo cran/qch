@@ -76,3 +76,42 @@ R_MLE_update_gaussian_copula_ptr_parallel <- function(Hconfig, fHconfig_sum, Old
     .Call(`_qch_R_MLE_update_gaussian_copula_ptr_parallel`, Hconfig, fHconfig_sum, OldPrior, Logf0Mat, Logf1Mat, zeta0, zeta1, OldR, OldRinv, RhoIndex, threads_nb)
 }
 
+#' This function is a re-implementation of the initial R loop computing 
+#' last incomplete trapezoid. See R function integral.kde_adapted().
+#' @param q_prob reference of the vector q_prob containing the probability of each quantile q
+#' @param q_ind reference of the vector q_ind 
+#' @param q reference of the vector q containing the quantiles
+#' @param eval reference of the vector eval 
+#' @param est reference of the vector est
+#' @param simp_rule reference of the vector simp_rule
+#' @param density logical
+#' @return void. Its first argument q_prob is passed as a reference and modified in place.
+last_incomplete_trapezoid_arma <- function(q_prob, q_ind, q, eval, est, simp_rule, density = TRUE) {
+    invisible(.Call(`_qch_last_incomplete_trapezoid_arma`, q_prob, q_ind, q, eval, est, simp_rule, density))
+}
+
+#' This function is a re-implementation of the initial R side while loop. 
+#' See the end of R function integral.kde_adapted().
+#' As shown in the commentary below, it is twice as slow to handle the index ordering 
+#' of the vector q (2nd argument) here with the function arma::sort_index().
+#' Consequently, it is recommended to use the function remove_decreasing_values_cpp() instead.
+#' @param q_prob reference of the vector q_prob 
+#' @param q reference of the vector q 
+#' @param tol By default 1e-10
+#' @return void. Its first argument q_prob is passed as a reference and modified in place.
+remove_decreasing_values_cpp_slow_ordering <- function(q_prob, q, tol = 1e-10) {
+    invisible(.Call(`_qch_remove_decreasing_values_cpp_slow_ordering`, q_prob, q, tol))
+}
+
+#' Same as function above but does not handle the index ordering of the vector q. 
+#' Therefore, the 2nd argument order_q has to be an index ordered version of the vector q.
+#' Indeed, the R base function: order() is twice as fast as the arma::sort_index(q)
+#' This is therefore the recommended function to use.
+#' @param q_prob reference of the vector q_prob 
+#' @param order_q reference of the vector q 
+#' @param tol By default 1e-10
+#' @return void. Its first argument q_prob is passed as a reference and modified in place.
+remove_decreasing_values_cpp <- function(q_prob, order_q, tol = 1e-10) {
+    invisible(.Call(`_qch_remove_decreasing_values_cpp`, q_prob, order_q, tol))
+}
+
